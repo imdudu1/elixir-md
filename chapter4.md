@@ -159,3 +159,67 @@ true
 ```
 
 기본적인 데이터 타입도 강력하지만, 만약 프로그램에서 시간을 다루게 된다면 라우 탄스코프가 만든 Calendar 등 서드파티 라이브러리의 지원을 받는 것이 좋다.
+
+## 스코프
+
+스코프는 다른 언어의 개념과 같이 변수의 생명 주기를 나타낸다. 엘릭서는 여러 표현식을 하나로 묶을 수 있는 do 블록로 스코프 범위를 정할 수 있다.
+
+```
+line_no = 50
+
+if (line_no == 50) do
+    IO.puts "new-page\f"
+    line_no = 0
+end
+
+IO.puts line_no
+```
+
+여기서 `line_no`는 동일한 변수명을 가지지만, 두 변수가 선언된 스코프 영역은 다르기 때문에 line_no는 서로 다른 변수로 생각해야 한다. 따라서 최종 출력은 `50`이 출력된다.
+
+### with 표현식
+
+with 표현식은 do와 비슷하게 로컬 스코프를 정의를 하게 된다. 또 다른 용도는 패턴 매칭이 실패했을 때 대응할 수 있는 역할도 제공한다.
+
+```
+content = "Now is the time"
+
+lp  =  with {:ok, file}   = File.open("/etc/passwd"),
+            content       = IO.read(file, :all),  # 위와 같은 변수명 사용
+            :ok           = File.close(file),
+            [_, uid, gid] = Regex.run(~r/^_lp:.*?:(\d+):(\d+)/m, content)
+       do
+            "Group: #{gid}, User: #{uid}"
+       end
+
+IO.puts lp             #=> Group: 26, User: 26
+IO.puts content        #=> Now is the time
+```
+
+위 변수명이 동일하지만, with로 스코프가 분리돼 서로 다른 메모리 영역을 가지게 된다. 또 중요하게 봐야할 점은 6번째 줄로 정규식 결과를 패턴 매칭하는 부분이다.
+
+하지만 `=`는 패턴 매칭에 실패한 경국 `MatchError` 예외가 발생하기 때문이다. 이런 경우 `<-` 연산자를 이용해 실패한 경우 좀 더 우아한 방식으로 처리할 수 있다.
+
+```
+iex(1)> with [a | _] <- [1, 2, 3], do: a
+1
+iex(2)> with [a | _] <- nil, do: a      
+nil
+iex(3)> with [a | _] = nil, do: a 
+** (MatchError) no match of right hand side value: nil
+    (stdlib 4.2) erl_eval.erl:496: :erl_eval.expr/6
+    iex:3: (file)
+```
+
+with는 함수나 매크로를 호출하는 것과 같은 취급을 받는다. 따라서 다음과 같은 사용할 수 없다.
+
+```
+mean = with
+          count = Enum.count(values),
+          sum = Enum.count(values)
+       do
+          sum / count
+       end
+```
+
+만약 with 다음 바로 개행이 필요한 경우 괄호를 사용해 내부 표현식을 묶을 필요가 있다.
