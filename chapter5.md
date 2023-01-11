@@ -84,3 +84,43 @@ IO.puts mr_valim.("Dave")    # => I don't know you
 ```
 
 만약 핀 연산자를 사용하지 않고, 패턴 매칭을 하게 되면 name이 호출되는 name과 매칭돼 항상 환영 메시지를 출력하게 된다.
+
+## & 표기법
+
+엘릭서에서는 함수를 만드는 전략이 하나 더 존재하는데, `&` 표기법을 이용하는 방법이다.
+
+```elixir
+iex(1)> add_one = &(&1 + 1)
+#Function<42.3316493/1 in :erl_eval.expr/6>
+iex(2)> add_one.(3)
+4
+iex(3)> add_one_2 = fn x -> x + 1 end
+#Function<42.3316493/1 in :erl_eval.expr/6>
+iex(4)> add_one_2.(3)
+4
+```
+
+& 연산자 뒤에 나오는 표현식을 함수로 변환하며, 이때 괄호 안의 `&1`은 첫번째 인자를 의미한다.
+
+```elixir
+iex(6)> divrem = &{ div(&1, &2), rem(&1, &2) }
+#Function<41.3316493/2 in :erl_eval.expr/6>
+iex(7)> divrem.(1, 2)
+{0, 1}
+iex(8)> s = &"bacon and #{&1}"
+#Function<42.3316493/1 in :erl_eval.expr/6>
+iex(9)> s.("custard")
+"bacon and custard"
+```
+
+이렇게 함수를 정의하는 형태로 사용될 수 있지만, 기존 함수를 다른 이름으로 변경하여 캡처할 수 있는 형태도 제공한다.
+
+```elixir
+iex(1)> l = &length/1
+&:erlang.length/1
+iex(2)> l.([1,2,3,4])
+4
+```
+
+
+
