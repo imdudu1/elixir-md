@@ -85,3 +85,55 @@ warning: this clause for of/1 cannot match because a previous clause at line 2 a
 ```
 
 `BadFactorial`의 경우 가장 처음 만나는 집합이 하위 집합을 모두 포함하기 때문에 엘릭서의 패턴 매칭은 다음 패턴에 매칭될 수 없다.
+
+## 가드 조건절
+
+엘릭서는 전달받은 인자를 이용한 패턴 매칭을 통해 어떤 함수를 실행할지를 결정한다. 하지만, 조건이나 인자의 타입에 따라 실행할 함수를 결정하고 싶다면 `가드 조건절`을 사용한다. 가드 조건절은 함수 정의부에 `when` 키워드를 붙일 수 있는 명제다. 이렇게 붙은 가드 조건절은 패턴 매칭을 수행할 때 조건이 참이어야만 함수가 실행된다.
+
+```elixir
+defmodule Guard do
+  def what_is(x) when is_number(x) do
+    IO.puts("#{x} is a number")
+  end
+
+  def what_is(x) when is_list(x) do
+    IO.puts("#{inspect(x)} is a list")
+  end
+
+  def what_is(x) when is_atom(x) do
+    IO.puts("#{x} is an atom")
+  end
+end
+
+Guard.what_is(99)
+Guard.what_is(:cat)
+Guard.what_is([1, 2, 3])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+99 is a number
+cat is an atom
+[1, 2, 3] is a list
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+가드를 이용해 앞서 선언한 팩토리얼 함수를 좀 더 안전하게 작성할 수 있다.
+
+```elixir
+defmodule SafeFactorial do
+  def of(0), do: 1
+
+  def of(n) when is_integer(n) and n > 0 do
+    n * of(n - 1)
+  end
+end
+
+SafeFactorial.of(-1)
+```
