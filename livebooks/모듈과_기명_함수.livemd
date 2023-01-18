@@ -24,20 +24,8 @@ defmodule Times do
 end
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-{:module, Times, <<70, 79, 82, 49, 0, 0, 5, ...>>, {:double, 1}}
-```
-
 ```elixir
 defmodule InlineTimes, do: def(double(n), do: n * 2)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:module, InlineTimes, <<70, 79, 82, 49, 0, 0, 5, ...>>, {:double, 1}}
 ```
 
 따라서 위 두 코드는 동일하게 평가되지만, 후자의 경우 추천하지 않는 방식이다.
@@ -55,12 +43,6 @@ end
 Factorial.of(10)
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-3628800
-```
-
 위 코드처럼 엘릭서에서 재귀를 이용해 설계하고 코딩하는 패턴은 매우 일반적이지만, 정의를 옮길 때 어떤 순서로 쓰는지에 따라 결과가 달라질 수 있다. 엘릭서는 함수들에 대해 패턴 매칭을 수행할 때 코드의 위에서 아래 순서로 확인하기 때문에 주의해야 한다.
 
 ```elixir
@@ -68,20 +50,6 @@ defmodule BadFactorial do
   def of(n), do: n * of(n - 1)
   def of(0), do: 1
 end
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-warning: this clause for of/1 cannot match because a previous clause at line 2 always matches
-  #cell:gkod7g5sdoopgtbslneeii3fdmcfiykx:3
-
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:module, BadFactorial, <<70, 79, 82, 49, 0, 0, 5, ...>>, {:of, 1}}
 ```
 
 `BadFactorial`의 경우 가장 처음 만나는 집합이 하위 집합을 모두 포함하기 때문에 엘릭서의 패턴 매칭은 다음 패턴에 매칭될 수 없다.
@@ -110,20 +78,6 @@ Guard.what_is(:cat)
 Guard.what_is([1, 2, 3])
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-99 is a number
-cat is an atom
-[1, 2, 3] is a list
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-:ok
-```
-
 가드를 이용해 앞서 선언한 팩토리얼 함수를 좀 더 안전하게 작성할 수 있다.
 
 ```elixir
@@ -136,4 +90,78 @@ defmodule SafeFactorial do
 end
 
 SafeFactorial.of(-1)
+```
+
+이런 가드 조건절에는 엘릭서 표현식 중 일부만 사용할 수 있다.
+
+* 비교 연산자
+* 이진 및 부정 연산자
+* 산술 연산자
+* 연결 연산자
+* in 연산자
+* 타입 확인 함수
+
+등 더 상세한 조건은 엘릭서 공식 사이트를 참고하자.
+
+## 기본 파라미터
+
+익명 함수와 마찬가지로 기명 함수에도 `param \\ value` 문법으로 기본값을 지정할 수 있다. 또 한 앞서 살펴본 규칙도 그래도 적용된다.
+
+```elixir
+defmodule Example do
+  def func(p1, p2 \\ 2, p3 \\ 3, p4) do
+    IO.inspect([p1, p2, p3, p4])
+  end
+end
+
+Example.func("a", "b")
+Example.func("a", "b", "c")
+Example.func("a", "b", "c", "d")
+```
+
+기본 파라미터를 정의한 함수를 패턴 매칭 시 신기한 동작을 보인다. 다음과 같은 코드를 작성하면 컴파일러는 에러를 출력한다.
+
+```elixir
+def func(p1, p2 \\ 2, p3 \\ 3, p4) do
+  IO.inspect([p1, p2, p3, p4])
+end
+
+def func(p1, p2) do
+  IO.inspect([p1, p2])
+end
+```
+
+에러가 출력되는 이유는 두 함수의 필수값이 2개로 동일하기 때문이다. 따라서 엘릭서는 어떤 함수와 매칭될지 결정할 수 없기 때문이다. 그리고 애매한 상황인 경우 엘릭서는 경고를 주게 된다.
+
+```elixir
+defmodule DefaultParams1 do
+  def func(p1, p2 \\ 123) do
+    IO.inspect([p1, p2])
+  end
+
+  def func(p1, 99) do
+    IO.puts("you said 99")
+  end
+end
+```
+
+만약 위 경우처럼 기본값이 필요한 상황이라면, 기본값이 정의된 함수를 본문 없이 정의하고, 나머지 함수를 기본값 없이 정의하면 된다. 그러면 나머지 모든 함수에 기본값이 적용된다.
+
+```elixir
+defmodule Params do
+  def func(p1, p2 \\ 123)
+
+  def func(p1, p2) when is_list(p1) do
+    "You said #{p2} with a list"
+  end
+
+  def func(p1, p2) do
+    "You passed in #{p1} and #{p2}"
+  end
+end
+
+IO.puts(Params.func(99))
+IO.puts(Params.func(99, "cat"))
+IO.puts(Params.func([99]))
+IO.puts(Params.func([99], "dog"))
 ```
