@@ -165,3 +165,14 @@ IO.puts(Params.func(99, "cat"))
 IO.puts(Params.func([99]))
 IO.puts(Params.func([99], "dog"))
 ```
+
+## 프라이빗 함수
+
+객체지향 프로그래밍을 접한 개발자라면 함수의 가시성을 제한하는 것에 익숙해져 있다. 엘릭서도 함수의 가시성을 제한할 수 있는 프라이빗 함수를 정의할 수 있는 `defp` 키워드를 제공한다. 하지만 하나의 함수에 퍼블릭과 프라이빗이 공존할 수 없다.
+
+```elixir
+defmodule BadPrivateFunc do
+  def fun(a) when is_list(a), do: true
+  defp fun(a), do: false
+end
+```
