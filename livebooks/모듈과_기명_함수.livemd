@@ -176,3 +176,38 @@ defmodule BadPrivateFunc do
   defp fun(a), do: false
 end
 ```
+
+## 끝내주는 파이프 연산자: |>
+
+파이프 연산자는 함수형 프로그래밍에서 가장 맛있는(?) 부분이다. 함수형이 아닌 언어에 익숙한 개발자는 다음 코드가 저 익숙할 수 있다.
+
+```elixir
+people = DB.find_customers()
+orders = Orders.for_customers(people)
+tax = sales_tax(orders, 2018)
+filing = prepare_filing(tax)
+```
+
+또는 더 심한 코드도 본 적이 있을 것이다.
+
+```elixir
+filing = prepare_filing(sales_tax(Orders.for_customers(DB.find_customers()), 2018))
+```
+
+이런 형식의 코드는 정황하고, 또 읽기 어려운 코드가 나오기 쉽다. 하지만 파이프 연산자를 도입하면 다음과 같이 예쁜 코드가 나오게 된다.
+
+```elixir
+filing =
+  DB.find_customers()
+  |> Orders.for_customers()
+  |> sales_tax(2018)
+  |> prepare_filing
+```
+
+앞서 살펴본 두 코드의 장점(위에서 아래로, 결과를 담아둘 변수를 매번 만들지 않는)을 모두 갖춘 코드가 완성된다. 이렇게 파이프 연산자는 위 실행 결과를 받아서 함수의 오른쪽 인자부터 채워 넣는 형태로 동작한다 따라서 위 sales_tax는 `sales_tax(Orders.for_customers(...생략...), 2018)` 형태가 된다. 또 다음과 같이 한 줄에 이어 쓸 수도 있다.
+
+```elixir
+1..10 |> Enum.map(&(&1 * &1)) |> Enum.filter(&(&1 < 40))
+```
+
+이런식으로 파이프를 통해 코드를 작성하면 코드의 흐름을 깔끔하게 표현할 수 있고, 파이프의 구조 자체가 함수를 잘게 나눠야 하기 때문에 자연스럽게 좋은 코드를 작성할 수 있는 기회가 된다.
